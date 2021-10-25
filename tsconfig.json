@@ -1,0 +1,22 @@
+{
+	"extends": "@tsconfig/node16/tsconfig.json",
+	"ts-node": {
+		"moduleTypes": {
+			"jest.config.ts": "cjs"
+		}
+	},
+	"compilerOptions": {
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true,
+		"strict": true,
+		"outDir": "./dist",
+		"baseUrl": ".",
+		"moduleResolution": "Node",
+		"module": "CommonJS",
+		"lib": ["es6", "DOM"],
+		"types": ["jest", "node"],
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true
+	},
+	"exclude": ["node_modules", "dist", "*.d.ts", "tests"]
+}
