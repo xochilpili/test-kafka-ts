@@ -40,6 +40,7 @@ Strategies
 
 // const PublicWorkflow = root.lookupType('com.yalo.schemas.events.applications.PublishWorkflowEvent');
 // const Metadata = root.lookupType('com.yalo.schemas.events.common.Metadata');
+const d = new Date()
 const myTestEvent: TestEvent = {
 	correlationId: 'abc',
 	eventName: 'myDummyEvent',
@@ -50,18 +51,9 @@ const myTestEvent: TestEvent = {
 		language: 'es',
 		stepSequence: 2,
 		status: 'ACTIVE',
-		createdAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
-		updatedAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
-		publishedAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
+		createdAt: d,
+		updatedAt: d,
+		publishedAt: d,
 	},
 };
 function createEvent() {

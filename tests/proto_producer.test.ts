@@ -68,8 +68,6 @@ describe('Proto Producer Test', () => {
 
 	it('should setup a proto producer', async () => {
 		const mockDate = new Date('2021-01-01T00:00:00.000Z');
-		jest.spyOn(global, 'Date').mockImplementation(() => mockDate as unknown as string);
-		Date.now = jest.fn(() => mockDate.getTime());
 		// generate fake indexes
 		const protoIndexes = new Map<string, number[]>();
 		protoIndexes.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [1]);
@@ -95,7 +93,7 @@ describe('Proto Producer Test', () => {
 			(event: proto.ProtobufAlike<any>) => event
 		);
 
-		const fakeEvent: proto.ProtobufAlike<TestEvent> = {
+		const fakeEvent: TestEvent = {
 			eventName: 'publishedWorkflow',
 			correlationId: 'correlation-id',
 			workflowId: 'workflow-id',
@@ -105,18 +103,9 @@ describe('Proto Producer Test', () => {
 				language: 'es',
 				stepSequence: 2,
 				status: 'ACTIVE',
-				createdAt: {
-					seconds: new Date().getSeconds(),
-					nanos: Date.now(),
-				},
-				updatedAt: {
-					seconds: new Date().getSeconds(),
-					nanos: Date.now(),
-				},
-				publishedAt: {
-					seconds: new Date().getSeconds(),
-					nanos: Date.now(),
-				},
+				createdAt: mockDate, 
+				updatedAt: mockDate,
+				publishedAt: mockDate,
 			},
 		};
 		/*
@@ -130,7 +119,8 @@ describe('Proto Producer Test', () => {
 		[0,0,0,0,1,2,0]
 		*/
 		const m = await mockProtoSerializer.serialize('fake-topic', { ...fakeEvent });
-		const a = root.lookupType('com.yalo.schemas.events.applications.PublishWorkflowEvent').encode(fakeEvent);
+		const PublishWorkflowEvent = root.lookupType('com.yalo.schemas.events.applications.PublishWorkflowEvent');
+		const a = PublishWorkflowEvent.encode(PublishWorkflowEvent.fromObject({ ...fakeEvent }));
 
 		const header = Buffer.from([0x0, 0x0, 0x0, 0x0, 0x1, 0x2, 0x2]);
 		const payload = Buffer.concat([header, a.finish()]);
@@ -146,10 +136,11 @@ describe('Proto Producer Test', () => {
 		};
 		const producer = await setupProtoProducer(kafka.producer(), mockProtoSerializer);
 		await producer.sendToTopic('fake-topic', 'key', fakeEvent);
+		expect(new Date() instanceof Date).toBeTruthy();
 		expect(kafkaProducer).toHaveBeenCalled();
 		expect(kafkaProducerConnect).toHaveBeenCalled();
 		expect(kafkaProducerSend).toHaveBeenCalledWith(expected);
-		expect(m?.slice(7, m?.length)).toStrictEqual(a.finish());
 		expect(payload).toStrictEqual(m);
+		expect(m?.slice(7, m?.length)).toStrictEqual(payload?.slice(7, payload?.length));
 	});
 });
