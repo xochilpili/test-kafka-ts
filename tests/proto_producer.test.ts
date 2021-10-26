@@ -1,7 +1,7 @@
 import { TestEvent } from './../src/interfaces/index';
 import kafkajs, { Kafka, KafkaConfig, LogEntry, logLevel } from 'kafkajs';
 import * as schemaRegistry from '@kafkajs/confluent-schema-registry';
-import { root, populateMetadata } from '@engyalo/schemas';
+import { root, populateMetadata, mapProtoFiles } from '@engyalo/schemas';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
 import { setupProtoProducer } from '../src/producer/proto_producer';
 import { SchemaRegistry } from '@kafkajs/confluent-schema-registry';
@@ -43,7 +43,7 @@ describe('Proto Producer Test', () => {
 			(config) =>
 				({
 					getSchema: (schemaGetSchema = jest.fn().mockReturnValue(true as any)),
-					getLatestSchemaId: (schemaGetLatestId = jest.fn().mockReturnValue([0])),
+					getLatestSchemaId: (schemaGetLatestId = jest.fn().mockReturnValue(1)),
 				} as any)
 		) as any;
 	});
@@ -72,7 +72,7 @@ describe('Proto Producer Test', () => {
 		Date.now = jest.fn(() => mockDate.getTime());
 		// generate fake indexes
 		const protoIndexes = new Map<string, number[]>();
-		protoIndexes.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [0]);
+		protoIndexes.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [1]);
 		// mock subjectResolver and return a fake FQN namespace subject
 		const mockSubjectResolver = jest.fn().mockImplementation((topic: string) => ({
 			resolveSubject: jest.fn().mockReturnValue('com.yalo.schemas.events.applications.PublishWorkflowEvent'),
@@ -94,7 +94,8 @@ describe('Proto Producer Test', () => {
 			mockSchemaResolver,
 			(event: proto.ProtobufAlike<any>) => event
 		);
-		/*const fakeEvent: proto.ProtobufAlike<TestEvent> = {
+
+		const fakeEvent: proto.ProtobufAlike<TestEvent> = {
 			eventName: 'publishedWorkflow',
 			correlationId: 'correlation-id',
 			workflowId: 'workflow-id',
@@ -104,44 +105,46 @@ describe('Proto Producer Test', () => {
 				language: 'es',
 				stepSequence: 2,
 				status: 'ACTIVE',
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				publishedAt: new Date(),
-			},
-		};
-		const fakeEventMeta = {
-			metadata: {
-				source: {},
-				timestamp: {
-					nanos: 0,
-					seconds: '1609459200',
+				createdAt: {
+					seconds: new Date().getSeconds(),
+					nanos: Date.now(),
+				},
+				updatedAt: {
+					seconds: new Date().getSeconds(),
+					nanos: Date.now(),
+				},
+				publishedAt: {
+					seconds: new Date().getSeconds(),
+					nanos: Date.now(),
 				},
 			},
-			...fakeEvent,
-			id: '123',
-			partnerId: '',
-			customerId: '',
-			channels: [],
-			sessionTimeHrs: 0,
-			activities: [],
-			scopes: [],
-			triggers: [],
-		};*/
+		};
+		/*
+		root.lookupType(‘fully.qualified.message.Name’).encode(value) gives you the same buffer you would get if you call serializer.serialize(value), but without the header.  Similarly, 
+		root.lookupType(‘fully.qualified.message.Name’).decode(buffer) will deserialize a buffer back into a protobuf.  However, the buffer must skip the header since decode(buffer) knows nothing about the header structure.
+		[0,0,0,0,1,2,0]
+		*/
+		const m = await mockProtoSerializer.serialize('fake-topic', { ...fakeEvent });
+		const a = root.lookupType('com.yalo.schemas.events.applications.PublishWorkflowEvent').encode(fakeEvent);
+
+		const header = Buffer.from([0x0, 0x0, 0x0, 0x0, 0x1, 0x2, 0x2]);
+		const payload = Buffer.concat([header, a.finish()]);
 		const keySerializer = Buffer.from('key', 'utf-8');
-		const valueSerializer = Buffer.from(JSON.stringify({ name: 'test' }), 'utf-8');
 		const expected = {
 			messages: [
 				{
 					key: keySerializer,
-					value: valueSerializer,
+					value: m,
 				},
 			],
 			topic: 'fake-topic',
 		};
 		const producer = await setupProtoProducer(kafka.producer(), mockProtoSerializer);
-		await producer.sendToTopic('fake-topic', 'key', { name: 'test' });
+		await producer.sendToTopic('fake-topic', 'key', fakeEvent);
 		expect(kafkaProducer).toHaveBeenCalled();
 		expect(kafkaProducerConnect).toHaveBeenCalled();
 		expect(kafkaProducerSend).toHaveBeenCalledWith(expected);
+		expect(m?.slice(7, m?.length)).toStrictEqual(a.finish());
+		expect(payload).toStrictEqual(m);
 	});
 });

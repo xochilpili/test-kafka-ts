@@ -50,9 +50,18 @@ const myTestEvent: TestEvent = {
 		language: 'es',
 		stepSequence: 2,
 		status: 'ACTIVE',
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		publishedAt: new Date(1970, 1, 1),
+		createdAt: {
+			seconds: new Date().getSeconds(),
+			nanos: Date.now(),
+		},
+		updatedAt: {
+			seconds: new Date().getSeconds(),
+			nanos: Date.now(),
+		},
+		publishedAt: {
+			seconds: new Date().getSeconds(),
+			nanos: Date.now(),
+		},
 	},
 };
 function createEvent() {

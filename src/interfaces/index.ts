@@ -1,12 +1,16 @@
+interface ProtoTimestamp {
+	seconds: number;
+	nanos: number;
+}
 export interface IWorkflow {
 	_id: string;
 	name: string;
 	language: string;
 	stepSequence: number;
 	status: string;
-	createdAt: Date;
-	updatedAt: Date;
-	publishedAt: Date;
+	createdAt: ProtoTimestamp;
+	updatedAt: ProtoTimestamp;
+	publishedAt: ProtoTimestamp;
 }
 
 export interface TestEvent {
