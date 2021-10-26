@@ -122,6 +122,11 @@ describe('Proto Producer Test', () => {
 		/*
 		root.lookupType(‘fully.qualified.message.Name’).encode(value) gives you the same buffer you would get if you call serializer.serialize(value), but without the header.  Similarly, 
 		root.lookupType(‘fully.qualified.message.Name’).decode(buffer) will deserialize a buffer back into a protobuf.  However, the buffer must skip the header since decode(buffer) knows nothing about the header structure.
+		0 value = 0
+		-1 value = 1
+		1 value = 2
+		-2 value = 3
+		2 value = 4
 		[0,0,0,0,1,2,0]
 		*/
 		const m = await mockProtoSerializer.serialize('fake-topic', { ...fakeEvent });
