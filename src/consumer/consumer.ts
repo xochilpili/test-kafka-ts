@@ -25,7 +25,7 @@ async function deadLetterHandler<T extends object>(payload: client.MessagePayloa
 
 export async function main() {
 	const kafkaConsumer = createKafka().consumer({ groupId: 'group-id' });
-	const consumer = await setupConsumer<TestEvent>(kafkaConsumer, 'plainJson', new client.JsonDeserializer<TestEvent>());
+	const consumer = await setupConsumer<TestEvent>(kafkaConsumer, 'plainJson', messageHandler, deadLetterHandler, new client.JsonDeserializer<TestEvent>());
 	const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 	signalTraps.forEach((type) => {
 		process.once(type, async () => {
@@ -41,7 +41,13 @@ export async function main() {
 	await consumer.run();
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-export async function setupConsumer<T extends object>(kafkaConsumer: Consumer, topic: string, valueDeserializer: client.JsonDeserializer<T>) {
+export async function setupConsumer<T extends object>(
+	kafkaConsumer: Consumer,
+	topic: string,
+	messageHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
+	deadLetterHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
+	valueDeserializer: client.JsonDeserializer<T>
+) {
 	const consumer = new client.Consumer(
 		kafkaConsumer,
 		{
