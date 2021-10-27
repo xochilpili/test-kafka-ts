@@ -2,6 +2,16 @@ import { TestEvent } from './../interfaces/index';
 import { Kafka, Consumer, logLevel, LogEntry } from 'kafkajs';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
 
+/*
+
+	Consumer dependencies:
+	1.- kafka consumer
+	2.- params: { messageHandler, deadLetterHandler},
+	3.- keyDeserializer: 
+	4.- valueDeserializer: JsonDeserializer ( in this particular exercise);
+	
+*/
+
 function createKafka() {
 	const kafka = new Kafka({
 		clientId: 'client1',
