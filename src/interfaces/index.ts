@@ -1,8 +1,18 @@
 interface ProtoTimestamp {
 	seconds: number;
-	nanos: number;
+	// nanos: number;
 }
 export interface IWorkflow {
+	_id: string;
+	name: string;
+	language: string;
+	stepSequence: number;
+	status: string;
+	createdAt: Date;
+	updatedAt: Date;
+	publishedAt: Date;
+}
+export interface IWorkflowSec {
 	_id: string;
 	name: string;
 	language: string;
@@ -18,4 +28,11 @@ export interface TestEvent {
 	eventName: string;
 	workflowId: string;
 	workflow: IWorkflow;
+}
+
+export interface TestEventSec {
+	correlationId: string;
+	eventName: string;
+	workflowId: string;
+	workflow: IWorkflowSec;
 }

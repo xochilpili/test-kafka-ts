@@ -1,6 +1,6 @@
-// import { main as consumerMain } from './consumer';
-// import { main as producerMain } from './producer/producer';
-import { main as protoMain } from './producer/proto_producer';
+import { main as consumerMain } from './consumer/consumer';
+import { main as producerMain } from './producer/producer';
+// import { main as producerMain } from './producer/proto_producer';
 
 main().catch((error) => {
 	console.error({ error });
@@ -16,10 +16,10 @@ async function main() {
 	if (first === 'producer') {
 		console.log('starting producer');
 		// await producerMain();
-		await protoMain();
-		/* } else if (first === 'consumer') {
+		await producerMain();
+	} else if (first === 'consumer') {
 		console.log('starting consumer');
-		await consumerMain(); */
+		await consumerMain();
 	} else {
 		console.log(`You must specify 'producer' or 'consumer' as the first argument to ${process.argv[1]}`);
 	}

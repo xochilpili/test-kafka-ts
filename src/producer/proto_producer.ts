@@ -50,18 +50,9 @@ const myTestEvent: TestEvent = {
 		language: 'es',
 		stepSequence: 2,
 		status: 'ACTIVE',
-		createdAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
-		updatedAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
-		publishedAt: {
-			seconds: new Date().getSeconds(),
-			nanos: Date.now(),
-		},
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		publishedAt: new Date(1970, 1, 1),
 	},
 };
 function createEvent() {
@@ -117,12 +108,8 @@ function constructSchemaResolver<T extends object>(): proto.MessageNameSchemaRes
 	return schmaResolver;
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function constructSerializer<T extends object>(
-	schemaResolver: proto.MessageNameSchemaResolver<T>
-): proto.ProtobufSerializer<T> {
-	return new proto.ProtobufSerializer(schemaResolver, (event: proto.ProtobufAlike<T>) =>
-		populateMetadata(event, populateSource)
-	);
+function constructSerializer<T extends object>(schemaResolver: proto.MessageNameSchemaResolver<T>): proto.ProtobufSerializer<T> {
+	return new proto.ProtobufSerializer(schemaResolver, (event: proto.ProtobufAlike<T>) => populateMetadata(event, populateSource));
 }
 
 export async function main(): Promise<void> {
@@ -145,10 +132,7 @@ export async function main(): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export async function setupProtoProducer<T extends object>(
-	kafkaProducer: Producer,
-	protobufSerializer: proto.ProtobufSerializer<T>
-): Promise<client.Producer<string, T>> {
+export async function setupProtoProducer<T extends object>(kafkaProducer: Producer, protobufSerializer: proto.ProtobufSerializer<T>): Promise<client.Producer<string, T>> {
 	const producer = new client.Producer(kafkaProducer, new client.StringSerializer(), protobufSerializer, undefined);
 	await producer.connect();
 	return producer;

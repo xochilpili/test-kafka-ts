@@ -29,7 +29,7 @@ import { TestEvent } from '../interfaces';
 
 	1.- Test with JSON string only --
 */
-
+const date = new Date();
 const myTestEvent: TestEvent = {
 	correlationId: 'abc',
 	eventName: 'myDummyEvent',
@@ -40,9 +40,9 @@ const myTestEvent: TestEvent = {
 		language: 'es',
 		stepSequence: 2,
 		status: 'ACTIVE',
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		publishedAt: new Date(1970, 1, 1),
+		createdAt: date,
+		updatedAt: date,
+		publishedAt: date,
 	},
 };
 
@@ -58,16 +58,13 @@ export async function main(): Promise<void> {
 	const serializer = new client.JsonSerializer();
 	const producer = await setupProducerInjected(kafka.producer(), serializer);
 
-	await producer.sendToTopic('test1', 'key', myTestEvent);
+	await producer.sendToTopic('plainJson', 'key', myTestEvent);
 	console.log('message should be sent!');
 	await producer.disconnect();
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export async function setupProducerInjected<T extends object>(
-	producer: Producer,
-	serializer: client.Serializer<T>
-): Promise<client.Producer<string, proto.ProtobufAlike<T>>> {
+export async function setupProducerInjected<T extends object>(producer: Producer, serializer: client.Serializer<T>): Promise<client.Producer<string, proto.ProtobufAlike<T>>> {
 	const p = new client.Producer<string, proto.ProtobufAlike<T>>(
 		producer, // 1.- kafka producer
 		new client.StringSerializer(), // 2.- keySerializer
