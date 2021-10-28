@@ -3,6 +3,8 @@ import { root, com, mapProtoFiles, populateMetadata } from '@engyalo/schemas';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
 import { TestEvent } from '../interfaces';
 import { Kafka, Producer, logLevel, LogEntry } from 'kafkajs';
+import { Type } from 'protobufjs';
+import { createEvent, populateSource } from './utils';
 // import { Type } from 'protobufjs';
 
 /*
@@ -31,48 +33,13 @@ import { Kafka, Producer, logLevel, LogEntry } from 'kafkajs';
 Strategies
 
 	TopicName: <TopicName>...protobuf.file</TopicName> - using this strategy, then SchemaResolver should use TopicNameSchemaResolver
-	MessageName: <fully.qualified.name>...protobuf.file</fully.qualified.name> - using this strategy, then should use MessageNameSchemaResolver
+	RecordName: <fully.qualified.name>...protobuf.file</fully.qualified.name> - using this strategy, then should use MessageNameSchemaResolver
 
 
 */
 
 /* test using protobuf  */
 
-// const PublicWorkflow = root.lookupType('com.yalo.schemas.events.applications.PublishWorkflowEvent');
-// const Metadata = root.lookupType('com.yalo.schemas.events.common.Metadata');
-const myTestEvent: TestEvent = {
-	correlationId: 'abc',
-	eventName: 'publishedWorkflow',
-	workflowId: 'workflow-id',
-	workflow: {
-		_id: '123',
-		name: 'dummy-workflow',
-		language: 'es',
-		stepSequence: 2,
-		status: 'ACTIVE',
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		publishedAt: new Date(1970, 1, 1),
-	},
-};
-function createEvent() {
-	/* const event = PublicWorkflow.create({
-		metadata: Metadata.create({
-			traceId: 'trace-id',
-		}),
-		...myTestEvent,
-	});
-	return event; */
-	return { ...myTestEvent };
-}
-
-const Domain = root.lookupEnum('com.yalo.schemas.events.common.Domain');
-function populateSource(source: com.yalo.schemas.events.common.Metadata.ISource) {
-	source.domain = Domain.values.APPLICATIONS;
-	source.instance = 'instance';
-	source.address = 'test-protobuf';
-	source.service = 'localhost';
-}
 // eslint-disable-next-line @typescript-eslint/ban-types
 class SubjectResolver<T extends object> implements proto.SubjectResolver<T> {
 	resolveSubject(topic: string, _msg: proto.ProtobufAlike<T>, _serializationType: client.SerializationType): string {
@@ -102,11 +69,12 @@ function constructSchemaResolver<T extends object>(): proto.MessageNameSchemaRes
 		protoIndexes,
 		client.SerializationType.ValueSerialization,
 		registry,
-		new SubjectResolver()
+		new SubjectResolver<proto.ProtobufAlike<com.yalo.schemas.events.applications.IPublishWorkflowEvent>>()
 	);
 
 	return schmaResolver;
 }
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 function constructSerializer<T extends object>(schemaResolver: proto.MessageNameSchemaResolver<T>): proto.ProtobufSerializer<T> {
 	return new proto.ProtobufSerializer(schemaResolver, (event: proto.ProtobufAlike<T>) => populateMetadata(event, populateSource));
@@ -121,9 +89,9 @@ export async function main(): Promise<void> {
 			console.log(entry);
 		},
 	});
-	const schemaResolver = constructSchemaResolver<TestEvent>();
-	const protoSerializer = constructSerializer<TestEvent>(schemaResolver);
-	const producer = await setupProtoProducer<TestEvent>(kafka.producer(), protoSerializer);
+	const schemaResolver = constructSchemaResolver<proto.ProtobufAlike<com.yalo.schemas.events.applications.IPublishWorkflowEvent>>();
+	const protoSerializer = constructSerializer<proto.ProtobufAlike<com.yalo.schemas.events.applications.IPublishWorkflowEvent>>(schemaResolver);
+	const producer = await setupProtoProducer<proto.ProtobufAlike<com.yalo.schemas.events.applications.IPublishWorkflowEvent>>(kafka.producer(), protoSerializer);
 	//
 
 	await producer.sendToTopic('test1', 'key', createEvent());
@@ -134,7 +102,12 @@ export async function main(): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export async function setupProtoProducer<T extends object>(kafkaProducer: Producer, protobufSerializer: proto.ProtobufSerializer<T>): Promise<client.Producer<string, T>> {
-	const producer = new client.Producer(kafkaProducer, new client.StringSerializer(), protobufSerializer, undefined);
+	const producer = new client.Producer<string, proto.ProtobufAlike<com.yalo.schemas.events.applications.IPublishWorkflowEvent>>(
+		kafkaProducer,
+		new client.StringSerializer(),
+		protobufSerializer,
+		undefined
+	);
 	await producer.connect();
 	return producer;
 }

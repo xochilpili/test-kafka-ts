@@ -87,8 +87,7 @@ describe('Proto Producer Test', () => {
 			mockSubjectResolver()
 		);
 
-		const populateSource = () => {};
-		// mocking protobufSerializer
+		// protobufSerializer
 		const mockProtoSerializer = new proto.ProtobufSerializer(mockSchemaResolver, (event: proto.ProtobufAlike<any>) => event);
 
 		const fakeEvent: TestEvent = {

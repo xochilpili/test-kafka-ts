@@ -1,7 +1,7 @@
 import { TestEvent } from './../interfaces/index';
 import { Kafka, logLevel, LogEntry, Consumer } from 'kafkajs';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
-import { root, mapProtoFiles } from '@engyalo/schemas';
+import { root } from '@engyalo/schemas';
 
 function createKafka() {
 	const kafka = new Kafka({
@@ -22,25 +22,23 @@ async function messageHandler<T extends object>(payload: client.MessagePayload<s
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function deadLetterHandler<T extends object>(payload: client.MessagePayload<string, proto.ProtobufAlike<T>>): Promise<void> {
+	console.log((payload.error as string).toString());
 	console.log(`DeadLetter: ${JSON.stringify(payload)}`);
 }
 
 function deserializer(): proto.ProtobufDeserializer {
-	const typesMap = mapProtoFiles().get('events/applications/workflows_manager.proto');
-	console.log(typesMap);
-
 	const fakeTypeMap = new Map<string, Map<string, number[]>>();
 	const typeMap = new Map<string, number[]>();
+	// fakeTypeMap.set('PublishWorkflowEvent', typeMap.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [0]));
 	fakeTypeMap.set('test1', typeMap.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [0]));
-
-	const entityResolver = new proto.MessageIndexEntityResolver(root, '', fakeTypeMap);
+	const entityResolver = new proto.MessageIndexEntityResolver<proto.ProtobufAlike<TestEvent>>(root, '', fakeTypeMap);
 
 	return new proto.ProtobufDeserializer(entityResolver);
 }
 
 export async function main(): Promise<void> {
-	const kafkaConsumer = createKafka().consumer({ groupId: 'group-ir20' });
-	const consumer = await setupProtoConsumer<TestEvent>(kafkaConsumer, 'test1', messageHandler, deadLetterHandler, deserializer());
+	const kafkaConsumer = createKafka().consumer({ groupId: 'group-ir' });
+	const consumer = await setupProtoConsumer<proto.ProtobufAlike<TestEvent>>(kafkaConsumer, 'test1', messageHandler, deadLetterHandler, deserializer());
 	const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 	signalTraps.forEach((type) => {
 		process.once(type, async () => {
@@ -62,7 +60,7 @@ export async function setupProtoConsumer<T extends object>(
 	deadLetterHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
 	valueDeserializer: proto.ProtobufDeserializer
 ) {
-	const consumer = new client.Consumer(kafkaConsumer, { messageHandler, deadLetterHandler }, new client.StringDeserializer(), valueDeserializer);
+	const consumer = new client.Consumer<string, proto.ProtobufAlike<T>>(kafkaConsumer, { messageHandler, deadLetterHandler }, new client.StringDeserializer(), valueDeserializer);
 	await consumer.connect();
 	await consumer.subscribe(topic, true);
 	return consumer;
