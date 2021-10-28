@@ -42,7 +42,7 @@ Strategies
 // const Metadata = root.lookupType('com.yalo.schemas.events.common.Metadata');
 const myTestEvent: TestEvent = {
 	correlationId: 'abc',
-	eventName: 'myDummyEvent2',
+	eventName: 'publishedWorkflow',
 	workflowId: 'workflow-id',
 	workflow: {
 		_id: '123',
@@ -125,6 +125,7 @@ export async function main(): Promise<void> {
 	const protoSerializer = constructSerializer<TestEvent>(schemaResolver);
 	const producer = await setupProtoProducer<TestEvent>(kafka.producer(), protoSerializer);
 	//
+
 	await producer.sendToTopic('test1', 'key', createEvent());
 	console.log('message sent');
 	await producer.disconnect();

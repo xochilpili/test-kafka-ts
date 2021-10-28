@@ -26,18 +26,20 @@ async function deadLetterHandler<T extends object>(payload: client.MessagePayloa
 }
 
 function deserializer(): proto.ProtobufDeserializer {
-	// const typesMap = mapProtoFiles().get('events/applications/workflows_manager.proto');
+	const typesMap = mapProtoFiles().get('events/applications/workflows_manager.proto');
+	console.log(typesMap);
+
 	const fakeTypeMap = new Map<string, Map<string, number[]>>();
 	const typeMap = new Map<string, number[]>();
 	fakeTypeMap.set('test1', typeMap.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [0]));
 
 	const entityResolver = new proto.MessageIndexEntityResolver(root, '', fakeTypeMap);
-	console.log(entityResolver);
+
 	return new proto.ProtobufDeserializer(entityResolver);
 }
 
 export async function main(): Promise<void> {
-	const kafkaConsumer = createKafka().consumer({ groupId: 'group-id' });
+	const kafkaConsumer = createKafka().consumer({ groupId: 'group-ir20' });
 	const consumer = await setupProtoConsumer<TestEvent>(kafkaConsumer, 'test1', messageHandler, deadLetterHandler, deserializer());
 	const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 	signalTraps.forEach((type) => {
@@ -60,7 +62,7 @@ export async function setupProtoConsumer<T extends object>(
 	deadLetterHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
 	valueDeserializer: proto.ProtobufDeserializer
 ) {
-	const consumer = new client.Consumer(kafkaConsumer, { messageHandler, deadLetterHandler }, new client.JsonDeserializer(), valueDeserializer);
+	const consumer = new client.Consumer(kafkaConsumer, { messageHandler, deadLetterHandler }, new client.StringDeserializer(), valueDeserializer);
 	await consumer.connect();
 	await consumer.subscribe(topic, true);
 	return consumer;
