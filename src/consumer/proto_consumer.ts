@@ -1,20 +1,11 @@
 import { TestEvent } from './../interfaces/index';
-import { Kafka, Consumer, logLevel, LogEntry } from 'kafkajs';
+import { Kafka, logLevel, LogEntry, Consumer } from 'kafkajs';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
-
-/*
-
-	Consumer dependencies:
-	1.- kafka consumer
-	2.- params: { messageHandler, deadLetterHandler},
-	3.- keyDeserializer: 
-	4.- valueDeserializer: JsonDeserializer ( in this particular exercise);
-	
-*/
+import { root, mapProtoFiles } from '@engyalo/schemas';
 
 function createKafka() {
 	const kafka = new Kafka({
-		clientId: 'client1',
+		clientId: 'client-1',
 		brokers: ['localhost:9092'],
 		logLevel: logLevel.INFO,
 		logCreator: () => (entry: LogEntry) => {
@@ -23,19 +14,31 @@ function createKafka() {
 	});
 	return kafka;
 }
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function messageHandler<T extends object>(payload: client.MessagePayload<string, proto.ProtobufAlike<T>>): Promise<void> {
-	console.log(`Messge: ${JSON.stringify(payload)}`);
-	console.log(`Type of message: ${payload?.value?.constructor?.name}`);
+	console.log(`Message: ${JSON.stringify(payload)}`);
+	console.log(`Message type: ${payload?.value?.constructor?.name}`);
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function deadLetterHandler<T extends object>(payload: client.MessagePayload<string, proto.ProtobufAlike<T>>): Promise<void> {
-	console.log(`Dead letter: ${JSON.stringify(payload)}`);
+	console.log(`DeadLetter: ${JSON.stringify(payload)}`);
+}
+
+function deserializer(): proto.ProtobufDeserializer {
+	// const typesMap = mapProtoFiles().get('events/applications/workflows_manager.proto');
+	const fakeTypeMap = new Map<string, Map<string, number[]>>();
+	const typeMap = new Map<string, number[]>();
+	fakeTypeMap.set('test1', typeMap.set('com.yalo.schemas.events.applications.PublishWorkflowEvent', [0]));
+
+	const entityResolver = new proto.MessageIndexEntityResolver(root, '', fakeTypeMap);
+	console.log(entityResolver);
+	return new proto.ProtobufDeserializer(entityResolver);
 }
 
 export async function main(): Promise<void> {
 	const kafkaConsumer = createKafka().consumer({ groupId: 'group-id' });
-	const consumer = await setupConsumer<TestEvent>(kafkaConsumer, 'plainJson', messageHandler, deadLetterHandler, new client.JsonDeserializer<TestEvent>());
+	const consumer = await setupProtoConsumer<TestEvent>(kafkaConsumer, 'test1', messageHandler, deadLetterHandler, deserializer());
 	const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 	signalTraps.forEach((type) => {
 		process.once(type, async () => {
@@ -47,26 +50,17 @@ export async function main(): Promise<void> {
 			}
 		});
 	});
-	// running the consumer
 	await consumer.run();
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-export async function setupConsumer<T extends object>(
+export async function setupProtoConsumer<T extends object>(
 	kafkaConsumer: Consumer,
 	topic: string,
 	messageHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
 	deadLetterHandler: (payload: client.MessagePayload<string, proto.ProtobufAlike<T>>) => Promise<void>,
-	valueDeserializer: client.JsonDeserializer<T>
+	valueDeserializer: proto.ProtobufDeserializer
 ) {
-	const consumer = new client.Consumer(
-		kafkaConsumer,
-		{
-			messageHandler,
-			deadLetterHandler,
-		},
-		new client.StringDeserializer(),
-		valueDeserializer
-	);
+	const consumer = new client.Consumer(kafkaConsumer, { messageHandler, deadLetterHandler }, new client.JsonDeserializer(), valueDeserializer);
 	await consumer.connect();
 	await consumer.subscribe(topic, true);
 	return consumer;

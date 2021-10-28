@@ -42,7 +42,7 @@ Strategies
 // const Metadata = root.lookupType('com.yalo.schemas.events.common.Metadata');
 const myTestEvent: TestEvent = {
 	correlationId: 'abc',
-	eventName: 'myDummyEvent',
+	eventName: 'myDummyEvent2',
 	workflowId: 'workflow-id',
 	workflow: {
 		_id: '123',

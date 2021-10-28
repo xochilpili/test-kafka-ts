@@ -1,6 +1,7 @@
-import { main as consumerMain } from './consumer/consumer';
-import { main as producerMain } from './producer/producer';
-// import { main as producerMain } from './producer/proto_producer';
+// import { main as consumerMain } from './consumer/consumer';
+import { main as consumerMain } from './consumer/proto_consumer';
+// import { main as producerMain } from './producer/producer';
+import { main as producerMain } from './producer/proto_producer';
 
 main().catch((error) => {
 	console.error({ error });
