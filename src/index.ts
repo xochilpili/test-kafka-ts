@@ -1,8 +1,11 @@
+import 'reflect-metadata';
 // import { main as consumerMain } from './consumer/consumer';
 import { main as consumerMain } from './consumer/proto_consumer';
 // import { main as producerMain } from './producer/producer';
 import { main as producerMain } from './producer/proto_producer';
 // import { main as producerMain } from './producer/producer_topicName';
+
+import { main as iocMain } from './ioc/producer/ioc_producer';
 
 main().catch((error) => {
 	console.error({ error });
@@ -17,7 +20,8 @@ async function main() {
 	const first = process.argv[2];
 	if (first === 'producer') {
 		console.log('starting producer');
-		await producerMain();
+		// await producerMain();
+		await iocMain();
 	} else if (first === 'consumer') {
 		console.log('starting consumer');
 		await consumerMain();

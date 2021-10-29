@@ -14,7 +14,7 @@
 		"moduleResolution": "Node",
 		"module": "CommonJS",
 		"lib": ["es6", "DOM"],
-		"types": ["jest", "node"],
+		"types": ["jest", "node", "reflect-metadata"],
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true
 	},

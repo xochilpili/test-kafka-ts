@@ -1,3 +1,5 @@
+import { protobuf as proto } from '@engyalo/kafka-ts';
+
 interface ProtoTimestamp {
 	seconds: number;
 	// nanos: number;
@@ -35,4 +37,9 @@ export interface TestEventSec {
 	eventName: string;
 	workflowId: string;
 	workflow: IWorkflowSec;
+}
+
+export interface IKafkaManager {
+	connect(): Promise<void>;
+	sendToTopic(topic: string, value: proto.ProtobufAlike<TestEvent>): Promise<void>;
 }
