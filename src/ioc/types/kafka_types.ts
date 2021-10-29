@@ -1,5 +1,9 @@
 export const KAFKA_TYPES = {
-	Kafka: Symbol('Kafka'),
-	KafkaConfig: Symbol('KafkaConfig'),
-	KafkaProducer: Symbol('KafkaProducer'),
+	Kafka: Symbol.for('Kafka'),
+	KafkaConfig: Symbol.for('KafkaConfig'),
+	KafkaProducer: Symbol.for('KafkaProducer'),
+	KafkaSchemaRegister: Symbol.for('KafkaSchemaRegister'),
+	KafkaSchemaRegisterClientArgs: Symbol.for('KafkaSchemaRegisterClientArgs'),
+	KafkaSchemaRegisterClientOpts: Symbol.for('KafkaSchemaRegisterClientOpts'),
+	KafkaSchemaRegisterClient: Symbol.for('KafkaSchemaRegisterClient'),
 };

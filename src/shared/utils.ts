@@ -10,6 +10,7 @@ export function createEvent() {
 			traceId: 'trace-id',
 		}),
 		eventName: 'publishedWorkflow',
+		correlatioId: 'correlationId',
 		workflowId: 'workflow-id',
 		workflow: {
 			_id: '1234',

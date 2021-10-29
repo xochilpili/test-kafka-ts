@@ -2,7 +2,7 @@ import { Kafka, logLevel, LogEntry, Producer } from 'kafkajs';
 import { com, mapProtoFiles, populateMetadata, root } from '@engyalo/schemas';
 import { SchemaRegistry } from '@kafkajs/confluent-schema-registry';
 import { client, protobuf as proto } from '@engyalo/kafka-ts';
-import { createEvent, populateSource } from './utils';
+import { createEvent, populateSource } from '../shared/utils';
 import { Type } from 'protobufjs';
 
 // eslint-disable-next-line @typescript-eslint/ban-types

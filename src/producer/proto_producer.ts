@@ -4,7 +4,7 @@ import { client, protobuf as proto } from '@engyalo/kafka-ts';
 import { TestEvent } from '../interfaces';
 import { Kafka, Producer, logLevel, LogEntry } from 'kafkajs';
 import { Type } from 'protobufjs';
-import { createEvent, populateSource } from './utils';
+import { createEvent, populateSource } from '../shared/utils';
 // import { Type } from 'protobufjs';
 
 /*
