@@ -6,7 +6,6 @@ import { KAFKA_MANAGER_TYPES } from './../../src/ioc/types/kafka-manager_types';
 import { PRODUCER_TYPES } from './../../src/ioc/types/producer_types';
 import { IKafkaManager, TestEvent } from './../../src/interfaces/index';
 import * as schemaRegistry from '@kafkajs/confluent-schema-registry';
-import schemas, { root } from '@engyalo/schemas';
 import { protobuf as proto } from '@engyalo/kafka-ts';
 
 describe('IoC Kafka Manager Tests', () => {
@@ -38,7 +37,13 @@ describe('IoC Kafka Manager Tests', () => {
 		jest.restoreAllMocks();
 	});
 
-	/*it('should mock kafka injected to module', async () => {
+	/*
+	
+	// This part is commented becuase was a test for KafkaManager with constructor:
+	//	constructor(@inject(Kafka) private kafka: Kafka){} 
+	//	for testing proposes
+	
+	it('should mock kafka injected to module', async () => {
 		appContainer.rebind<Producer>(KAFKA_TYPES.KafkaProducer).toConstantValue(new Kafka({ clientId: 'a', brokers: ['n'] }).producer());
 		appContainer.rebind<schemaRegistry.SchemaRegistry>(KAFKA_TYPES.KafkaSchemaRegisterClient).toConstantValue(new schemaRegistry.SchemaRegistry({ host: 'http://fake-url:8081' }));
 		const kafkaManager = appContainer.get<IKafkaManager>(KAFKA_MANAGER_TYPES.KafkaManager);
@@ -51,7 +56,10 @@ describe('IoC Kafka Manager Tests', () => {
 		expect(mockSchemaRegistry).toHaveBeenCalledWith({ host: 'http://fake-url:8081' });
 		expect(kafkaProducerConnect).toHaveBeenCalled();
 		expect(kafkaProducerSend).toHaveBeenCalledWith({ messages: [{ value: Buffer.from(JSON.stringify({ name: 'my-value' }), 'utf-8') }], topic: 'topic' });
-	});*/
+	});
+	
+	*/
+
 	it('should mock kafka when injected to kafkaManager', async () => {
 		const mockDate = new Date('2021-01-01T00:00:00.000Z');
 		Date.now = jest.fn(() => mockDate.getTime());
@@ -74,7 +82,9 @@ describe('IoC Kafka Manager Tests', () => {
 				publishedAt: mockDate,
 			},
 		};
+
 		const [strSerializer, protoSerializer, jsonSerializer] = appContainer.getAll<proto.ProtobufSerializer<any>>(PRODUCER_TYPES.Serializer);
+
 		const m = await protoSerializer.serialize('test1', { ...fakeEvent });
 
 		const expected = {
