@@ -112,7 +112,9 @@ export const producerModule = new ContainerModule((bind: interfaces.Bind) => {
 
 	// bind ProtobufSerializer to Serializer when target tagged with ValueSerialization
 	// AND parent is named 'protobuf'
-	/// This means that, when in constructor we added @inject(Producer_types.)...
+	/// This means that, when in constructor we added @inject(PRODUCER_TYPES.Producer) @named('protobuf') private producer:
+	//  When, added a @named decorator passing string value: 'protobuf', will instantiate ProtobufSerializer, otherwise: JsonSerializar or StringSerializer depending of customizations
+	//  // TODO: Add unit-testing for those String & Json Serialization in producer
 	const targetTaggedAndAncestorNamed = (targetTagName: string | number | symbol, targetTagValue: any, ancestorName: string) => (request: interfaces.Request) => {
 		return taggedConstraint(targetTagName)(targetTagValue)(request) && traverseAncerstors(request, namedConstraint(ancestorName));
 	};
